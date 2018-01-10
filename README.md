@@ -1,2 +1,2 @@
 # ChromeSend
-Send Tabs between chrom
+Send Tabs between your Google Chrome devices.
