@@ -12,8 +12,20 @@ function authorize(interactive)
             
                 $('#needsAuth').hide();
                 getStoredDeviceName().then(function(name){
-                    $('#deviceName').append(name);
-                    $('#readyToSend').show();
+                    updateDeviceList().then(function(){
+                        if(devices.indexOf(name) == -1)
+                        {
+                            EditFileOnDrive(name, "", "text/plain", true).then(function(){
+                                $('#deviceName').append(name);
+                                $('#readyToSend').show();
+                            });
+                        }
+                        else
+                        {
+                            $('#deviceName').append(name);
+                            $('#readyToSend').show();
+                        }
+                    });
                 }, function(){
                     updateDeviceList().then(function(){
                         $('#needsUserName').show();
@@ -64,14 +76,31 @@ function setStoredDeviceName(name)
     });
 }
 
+function clearStoredDeviceName()
+{
+    return new Promise(function(resolve, reject){
+        chrome.storage.local.remove("deviceName", function(){
+            if(chrome.runtime.lasterror)
+            {
+                reject(Error(chrome.runtime.lasterror));
+            }
+            else
+            {
+                resolve();
+            }
+        });
+    });
+}
+
 function updateDeviceList()
 {
     return new Promise(function(resolve, reject){
         $('#deviceList').empty();
         GetFileList().then(function(items){
+            var list = $('#deviceList').add('#readyDeviceList');
             devices = new Array();
             items.forEach(function(elem){
-                $('#deviceList').append("<div>" + elem.title + "</div>");
+                list.append("<div>" + elem.title + "</div>");
                 devices.push(elem.title);
             });
             resolve();
@@ -172,19 +201,32 @@ function editingName()
 
 function completeName()
 {
-    if(devices.indexOf($('#username').val()) == -1)
+    $('#changeDeviceNameStatus').empty();
+    if(accessToken)
     {
-        setStoredDeviceName($('#username').val()).then(function(){
-            $('#needsUserName').hide();
-            $('#deviceName').append($('#username').val());
-            $('#readyToSend').show();
-        }, function(err) {
-            $('changeDeviceNameStatus').empty().append("<span style='color:red'>Failed to update device name!</span>");
-        });
+        var name = $('#username').val();
+        if(devices.indexOf(name) == -1)
+        {
+            setStoredDeviceName(name).then(function(){
+                EditFileOnDrive(name, "", 'text/plain', true).then(function(){
+                    $('#needsUserName').hide();
+                    $('#deviceName').append(name);
+                    $('#readyToSend').show();
+                }, function (err){
+                    $('changeDeviceNameStatus').append("<span style='color:red'>Failed to update device name!</span>");
+                });
+            }, function(err) {
+                $('changeDeviceNameStatus').append("<span style='color:red'>Failed to update device name!</span>");
+            });
+        }
+        else
+        {
+            $('changeDeviceNameStatus').append("<span style='color:red'>Device name is not unique!</span>");
+        }
     }
     else
     {
-        $('changeDeviceNameStatus').empty().append("<span style='color:red'>Device name is not unique!</span>");
+        $('changeDeviceNameStatus').append("<span style='color:red'>No authorization!</span>");
     }
 }
 
