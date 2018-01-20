@@ -98,8 +98,9 @@ function GetFileList(onsuccess, onerror)
         }
     };
     
-    ajax.open("GET", "https://www.googleapis.com/drive/v3/files");
+    ajax.open("GET", "https://www.googleapis.com/drive/v3/files", true);
     ajax.setRequestHeader('spaces', 'appDataFolder');
+    ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
     ajax.send();
 }
 
