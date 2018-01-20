@@ -1,12 +1,28 @@
-<html>
+<html style="width: 300px; height: 200px">
     <head>
+        <script src="js/jquery.slim.min.js"></script>
         <script src="js/popup.js"></script>
     </head>
     <body>
-        <input id="authorize-button" type="button" value="Authorize" class="btn"></button>
-        <input id="save" type="button" value="Save" class="btn"></button>
-        <div id="saveResult"></div>
-        <input id="load" type="button" value="Load" class="btn"></button>
-        <div id="loadResult"></div>
+        <div id="needsAuth">
+            <div>ChromeSend needs access to Google Drive's Application Data. By authorizing ChromeSend, you can transfer tabs among any connected devices.</div>
+            <input id="authorize-button" type="button" value="Authorize" class="btn">
+        </div>
+        <div id="needsUserName">
+            <div>Each device needs a unique name. The following device names are already taken:</div>
+            <div id="deviceList"></div>
+            <input id="username" type="text">
+            <input id="sendUser" type="button" value="Save device name">
+            <div id="changeDeviceNameStatus"></div>
+        </div>
+        <div id="readyToSend">
+            Device '<span id="deviceName"></span>' is ready to send.
+        </div>
+        <div id="testing">
+            <input id="save" type="button" value="Save" class="btn"></button>
+            <div id="saveResult"></div>
+            <input id="load" type="button" value="Load" class="btn"></button>
+            <div id="loadResult"></div>
+        </div>
     </body>
 </html>

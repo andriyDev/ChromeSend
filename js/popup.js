@@ -1,5 +1,6 @@
 
 var accessToken;
+var devices;
 
 function authorize(interactive)
 {
@@ -9,120 +10,182 @@ function authorize(interactive)
             if (token) {
                 accessToken = token;
             
-                console.log("Authenticated!");
-                var authbtn = document.getElementById('authorize-button');
-                authbtn.parentNode.removeChild(authbtn);
+                $('#needsAuth').hide();
+                getStoredDeviceName().then(function(name){
+                    $('#deviceName').append(name);
+                    $('#readyToSend').show();
+                }, function(){
+                    updateDeviceList().then(function(){
+                        $('#needsUserName').show();
+                    });
+                });
             }
         }
         );
     }
 }
 
-function CreateFolderOnDrive(foldername, onsuccess, onerror)
+function getStoredDeviceName()
 {
-    // EditFileOnDrive(foldername, "", "application/vnd.google-aps.folder", onsuccess, onerror);
-    var ajax = new XMLHttpRequest();
-    ajax.onreadystatechange = function() {
-        if(this.readyState == 4){
-            if(this.status == 200)
+    return new Promise(function(resolve, reject){
+        chrome.storage.local.get("deviceName", function(name){
+            if(chrome.runtime.lasterror)
             {
-                console.log(this.responseText);
-                onsuccess && onsuccess();
+                reject(Error(chrome.runtime.lastError));
             }
             else
             {
-                console.log("Here " + this.status + "\n" + this.responseText);
-                onerror && onerror(this.status, this.responseText);
+                if(jQuery.isEmptyObject(name))
+                {
+                    reject(Error("Name is empty"));
+                }
+                else
+                {
+                    resolve(name.deviceName);
+                }
             }
-        }
-    };
+        });
+    });
+}
 
-    var uploadBody = "";
-    uploadBody += "Content-type: application/json; charset=UTF-8\n\n";
-    uploadBody += JSON.stringify({name: foldername, mimeType: 'application/vnd.google-aps.folder', parents: ['appDataFolder']});
+function setStoredDeviceName(name)
+{
+    return new Promise(function(resolve, reject){
+        chrome.storage.local.set({deviceName: name}, function(){
+            if(chrome.runtime.lasterror)
+            {
+                reject(Error(chrome.runtime.lasterror));
+            }
+            else
+            {
+                resolve();
+            }
+        });
+    });
+}
 
-    ajax.open("POST",
-        "https://www.googleapis.com/upload/drive/v3/files?uploadType=media", true);
-    ajax.setRequestHeader('Content-Type', 'application/vnd.google-aps.folder');
-    ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    ajax.send(uploadBody);
+function updateDeviceList()
+{
+    return new Promise(function(resolve, reject){
+        $('#deviceList').empty();
+        GetFileList().then(function(items){
+            devices = new Array();
+            items.forEach(function(elem){
+                $('#deviceList').append("<div>" + elem.title + "</div>");
+                devices.push(elem.title);
+            });
+            resolve();
+        }, function(err){
+            $('#deviceList').append("<span style='color: red'>Failed to update the device list.</span>");
+            reject(err);
+        });
+    });
 }
 
 // This assumes that access token is valid.
-function EditFileOnDrive(filename, fileData, mimetype, createfile, onsuccess, onerror)
+function EditFileOnDrive(filename, fileData, mimetype, createfile)
 {
-    var ajax = new XMLHttpRequest();
-    ajax.onreadystatechange = function() {
-        if(this.readyState == 4){
-            if(this.status == 200)
-            {
-                onsuccess && onsuccess();
+    return new Promise(function(resolve, reject){
+        var ajax = new XMLHttpRequest();
+        ajax.onreadystatechange = function() {
+            if(this.readyState == 4){
+                if(this.status == 200)
+                {
+                    resolve();
+                }
+                else
+                {
+                    reject(Error({status: this.status, response: this.responseText}));
+                }
             }
-            else
-            {
-                onerror && onerror(this.status, this.responseText);
-            }
-        }
-    };
+        };
 
-    var uploadBody = "";
-    uploadBody += "--UploadBoundary\n";
-    uploadBody += "Content-type: application/json; charset=UTF-8\n\n";
-    uploadBody += JSON.stringify({name: filename, parents: ['appDataFolder']});
-    uploadBody += "\n--UploadBoundary\n";
-    uploadBody += "Content-Type: " + mimetype + "\n\n";
-    uploadBody += fileData;
-    uploadBody += "\n--UploadBoundary--";
+        var uploadBody = "";
+        uploadBody += "--UploadBoundary\n";
+        uploadBody += "Content-type: application/json; charset=UTF-8\n\n";
+        uploadBody += JSON.stringify({name: filename, parents: ['appDataFolder']});
+        uploadBody += "\n--UploadBoundary\n";
+        uploadBody += "Content-Type: " + mimetype + "\n\n";
+        uploadBody += fileData;
+        uploadBody += "\n--UploadBoundary--";
 
-    ajax.open(createfile ? "POST" : "PUT",
-        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", true);
-    ajax.setRequestHeader('Content-Type', 'multipart/related; boundary=UploadBoundary');
-    ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    ajax.send(uploadBody);
+        ajax.open(createfile ? "POST" : "PUT",
+            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", true);
+        ajax.setRequestHeader('Content-Type', 'multipart/related; boundary=UploadBoundary');
+        ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        ajax.send(uploadBody);
+    });
 }
 
 // This assumes that access token is valid.
 function GetFileList(onsuccess, onerror)
 {
-    var ajax = new XMLHttpRequest();
-    ajax.onreadystatechange = function() {
-        if(this.readyState == 4){
-            if(this.status == 200)
-            {
-                onsuccess && onsuccess(JSON.parse(this.responseText));
+    return new Promise(function(resolve, reject){
+        var ajax = new XMLHttpRequest();
+        ajax.onreadystatechange = function() {
+            if(this.readyState == 4){
+                if(this.status == 200)
+                {
+                    resolve(JSON.parse(this.responseText).items);
+                }
+                else
+                {
+                    reject(Error({status: this.status, response: this.responseText}));
+                }
             }
-            else
-            {
-                onerror && onerror(this.status, this.responseText);
-            }
-        }
-    };
-    
-    ajax.open("GET", "https://www.googleapis.com/drive/v2/files", true);
-    ajax.setRequestHeader('spaces', 'appDataFolder');
-    ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    ajax.send();
+        };
+        
+        ajax.open("GET", "https://www.googleapis.com/drive/v2/files", true);
+        ajax.setRequestHeader('spaces', 'appDataFolder');
+        ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        ajax.send();
+    });
 }
 
-function GetFileData(fileId, onsuccess, onerror)
+function GetFileData(fileId)
 {
-    var ajax = new XMLHttpRequest();
-    ajax.onreadystatechange = function() {
-        if(this.readyState == 4){
-            if(this.status == 200)
-            {
-                onsuccess && onsuccess(this.responseText);
+    return new Promise(function(resolve, reject){
+        var ajax = new XMLHttpRequest();
+        ajax.onreadystatechange = function() {
+            if(this.readyState == 4){
+                if(this.status == 200)
+                {
+                    resolve(this.responseText);
+                }
+                else
+                {
+                    reject(Error({status: this.status, response: this.responseText}));
+                }
             }
-            else
-            {
-                onerror && onerror(this.status, this.responseText);
-            }
-        }
-    };
-    
-    ajax.open("GET", "https://www.googleapis.com/drive/v2/files/" + fileId + "?alt=media", true);
-    ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    ajax.send();
+        };
+        
+        ajax.open("GET", "https://www.googleapis.com/drive/v2/files/" + fileId + "?alt=media", true);
+        ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        ajax.send();
+    });
+}
+
+function editingName()
+{
+    $('#sendUser').prop('disabled', devices.indexOf($('#username').val()) != -1);
+}
+
+function completeName()
+{
+    if(devices.indexOf($('#username').val()) == -1)
+    {
+        setStoredDeviceName($('#username').val()).then(function(){
+            $('#needsUserName').hide();
+            $('#deviceName').append($('#username').val());
+            $('#readyToSend').show();
+        }, function(err) {
+            $('changeDeviceNameStatus').empty().append("<span style='color:red'>Failed to update device name!</span>");
+        });
+    }
+    else
+    {
+        $('changeDeviceNameStatus').empty().append("<span style='color:red'>Device name is not unique!</span>");
+    }
 }
 
 function save()
@@ -130,7 +193,7 @@ function save()
     if(accessToken)
     {
         document.getElementById("saveResult").innerHTML = "Uploading...";
-        EditFileOnDrive("ChromeSend.db", "Hey demons it's ya boi Andriy", "text/plain", true,
+        EditFileOnDrive("ChromeSend.db", "Hey demons it's ya boi Andriy", "text/plain", true).then(
             function(){
                 document.getElementById("saveResult").innerHTML = "Success!";
             }, function(status, response){
@@ -144,13 +207,13 @@ function load()
 {
     if(accessToken)
     {
-        GetFileList(function(resp){
+        GetFileList().then(function(resp){
             if(resp.items.length == 0)
             {
                 console.log("No Items!");
                 return;
             }
-            GetFileData(resp.items[0].id, function(data){
+            GetFileData(resp.items[0].id).then(function(data){
                 console.log(data);
             }, function(status, response){
                 console.error("Failed!");
@@ -162,17 +225,17 @@ function load()
 }
 
 document.addEventListener("DOMContentLoaded", function(e){
-    var authButton = document.getElementById('authorize-button');
-    authButton.addEventListener('click', function(e){
-        authorize(true);
-    });
+    
+    $('#needsAuth').show();
+    $('#needsUserName').hide();
+    $('#readyToSend').hide();
+    $('#testing').hide();
+
     authorize(false);
-    var saveBtn = document.getElementById('save');
-    saveBtn.addEventListener('click', function(e){
-        save();
-    });
-    var loadBtn = document.getElementById('load');
-    loadBtn.addEventListener('click', function(e){
-        load();
-    });
+
+    $('#authorize-button').click(function(e){ authorize(true); });
+    $('#username').keypress(function(e){ editingName(); });
+    $('#sendUser').click(function(e){ completeName(); });
+    $('#save').click(function(e){ save(); });
+    $('#load').click(function(e){ load(); });
 });

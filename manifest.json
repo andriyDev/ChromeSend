@@ -15,6 +15,7 @@
     },
     "permissions": [
         "identity",
+        "storage",
         "https://ssl.gstatic.com/",
         "https://www.googleapis.com/",
         "https://accounts.google.com/"
