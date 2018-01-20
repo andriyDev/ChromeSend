@@ -99,9 +99,28 @@ function GetFileList(onsuccess, onerror)
     };
     
     ajax.open("GET", "https://www.googleapis.com/drive/v2/files", true);
-    // ajax.setRequestHeader('corpora', 'domain');
-    // ajax.setRequestHeader('q', '\'appDataFolder\' in parents');
     ajax.setRequestHeader('spaces', 'appDataFolder');
+    ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+    ajax.send();
+}
+
+function GetFileData(fileId, onsuccess, onerror)
+{
+    var ajax = new XMLHttpRequest();
+    ajax.onreadystatechange = function() {
+        if(this.readyState == 4){
+            if(this.status == 200)
+            {
+                onsuccess && onsuccess(this.responseText);
+            }
+            else
+            {
+                onerror && onerror(this.status, this.responseText);
+            }
+        }
+    };
+    
+    ajax.open("GET", "https://www.googleapis.com/drive/v2/files/" + fileId + "?alt=media", true);
     ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
     ajax.send();
 }
@@ -126,7 +145,16 @@ function load()
     if(accessToken)
     {
         GetFileList(function(resp){
-            console.log(resp.items);
+            if(resp.items.length == 0)
+            {
+                console.log("No Items!");
+                return;
+            }
+            GetFileData(resp.items[0].id, function(data){
+                console.log(data);
+            }, function(status, response){
+                console.error("Failed!");
+            });
         }, function(status, response){
             console.error("Failed!");
         });
