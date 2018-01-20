@@ -81,6 +81,28 @@ function EditFileOnDrive(filename, fileData, mimetype, createfile, onsuccess, on
     ajax.send(uploadBody);
 }
 
+// This assumes that access token is valid.
+function GetFileList(onsuccess, onerror)
+{
+    var ajax = new XMLHttpRequest();
+    ajax.onreadystatechange = function() {
+        if(this.readyState == 4){
+            if(this.status == 200)
+            {
+                onsuccess && onsuccess(JSON.parse(this.responseText));
+            }
+            else
+            {
+                onerror && onerror(this.status, this.responseText);
+            }
+        }
+    };
+    
+    ajax.open("GET", "https://www.googleapis.com/drive/v3/files");
+    ajax.setRequestHeader('spaces', 'appDataFolder');
+    ajax.send();
+}
+
 function save()
 {
     if(accessToken)
@@ -100,7 +122,11 @@ function load()
 {
     if(accessToken)
     {
-        
+        GetFileList(function(resp){
+            console.log(resp.items);
+        }, function(status, response){
+            console.error("Failed!");
+        });
     }
 }
 
