@@ -20,7 +20,7 @@ function authorize(interactive)
 
 function CreateFolderOnDrive(foldername, onsuccess, onerror)
 {
-    EditFileOnDrive(foldername, "", "application/vnd.google-aps.folder", onsuccess, onerror);
+    // EditFileOnDrive(foldername, "", "application/vnd.google-aps.folder", onsuccess, onerror);
     var ajax = new XMLHttpRequest();
     ajax.onreadystatechange = function() {
         if(this.readyState == 4){
@@ -42,10 +42,10 @@ function CreateFolderOnDrive(foldername, onsuccess, onerror)
     uploadBody += "Content-type: application/json; charset=UTF-8\n\n";
     uploadBody += JSON.stringify({name: foldername, mimeType: 'application/vnd.google-aps.folder'});
     uploadBody += "\n--UploadBoundary\n";
-    uploadBody += "Content-Type: " + mimetype + "\n\n";
+    uploadBody += "Content-Type: application/vnd.google-aps.folder\n\n";
     uploadBody += "\n--UploadBoundary--";
 
-    ajax.open(createfile ? "POST" : "PUT",
+    ajax.open("POST",
         "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", true);
     ajax.setRequestHeader('Content-Type', 'multipart/related; boundary=UploadBoundary');
     ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
