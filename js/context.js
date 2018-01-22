@@ -43,13 +43,10 @@ function ensureValidDeviceName()
 
                 if(deviceNames.indexOf(name) == -1)
                 {
-                    CreateFileOnDrive(name, "", "text/plain", true).then(function(file){
-                        thisDeviceName = name;
-                        deviceNames.push(elem.title);
-                        devices.push({name: elem.title, id: elem.id});
-                        resolve(name);
-                    }, function(){
+                    clearStoredDeviceName().then(function(){
                         thisDeviceName = undefined;
+                        reject(Error("Invalid device name."));
+                    }, function(err){
                         reject(Error("Invalid device name."));
                     });
                 }

@@ -51,13 +51,12 @@ function authorize(interactive)
                         populateDeviceLists();
                         if(deviceNames.indexOf(name) == -1)
                         {
-                            CreateFileOnDrive(name, "", "text/plain", true).then(function(file){
-                                $('#deviceName').append(name);
-                                $('#readyToSend').show();
-                                deviceNames.push(name);
-                                devices.push({name: name, id: file.id});
-                                updateContextMenus();
-                                openTabs();
+                            $('#needsUserName').show();
+                            clearStoredDeviceName().then(function(){
+                                thisDeviceName = undefined;
+                                reject(Error("Invalid device name."));
+                            }, function(err){
+                                reject(Error("Invalid device name."));
                             });
                         }
                         else
@@ -91,12 +90,42 @@ function authorize(interactive)
 
 function populateDeviceLists()
 {
-    var list = $('#deviceList').add('#readyDeviceList');
+    var list = $('.deviceList');
     list.empty();
     devices.forEach(function(elem){
-        list.append("<div>" + elem.name + "</div>");
+        if(elem.id != thisDeviceId)
+        {
+            list.append("<div>" + elem.name + "</div>");
+        }
     });
-    
+
+    list = $('#deleteDevice');
+    list.empty();
+    devices.forEach(function(elem){
+        if(elem.id != thisDeviceId)
+        {
+            list.append("<div class='deleteElem'><div>" + elem.name + "</div><input id='delete" + elem.id + "' type='button' value='Delete'></div>");
+            $('#delete' + elem.id).click(function(e){
+                deleteDevice(e.target.id.substring(6));
+            });
+        }
+    });
+}
+
+function deleteSelf()
+{
+    if(thisDeviceId)
+    {
+        deleteDevice(thisDeviceId);
+        thisDeviceId = undefined;
+    }
+}
+
+function deleteDevice(id)
+{
+    DeleteFileOnDrive(id).then(function(){}, function(err){
+        console.error(err);
+    });
 }
 
 function editingName()
@@ -148,13 +177,15 @@ document.addEventListener("DOMContentLoaded", function(e){
     $('#needsAuth').show();
     $('#needsUserName').hide();
     $('#readyToSend').hide();
-    $('#testing').hide();
+
+    $('#readyIdle').show();
+    $('#readySettings').hide();
 
     authorize(false);
 
     $('#authorize-button').click(function(e){ authorize(true); });
     $('#username').keypress(function(e){ editingName(); });
     $('#sendUser').click(function(e){ completeName(); });
-    $('#save').click(function(e){ save(); });
-    $('#load').click(function(e){ load(); });
+    $('#readyToggle').click(function(e){ $('#readyIdle').toggle(); $('#readySettings').toggle(); });
+    $('#reset').click(function(e){ deleteSelf(); });
 });

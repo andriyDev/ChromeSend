@@ -130,6 +130,30 @@ function UpdateFileOnDrive(fileId, data, mimeType)
     });
 }
 
+function DeleteFileOnDrive(fileId)
+{
+    return new Promise(function(resolve, reject){
+        var ajax = new XMLHttpRequest();
+        ajax.onreadystatechange = function() {
+            if(this.readyState == 4){
+                if(this.status == 200)
+                {
+                    resolve(JSON.parse(this.responseText));
+                }
+                else
+                {
+                    reject(Error(JSON.stringify({status: this.status, response: this.responseText})));
+                }
+            }
+        };
+
+        ajax.open("DELETE",
+            "https://www.googleapis.com/drive/v2/files/" + fileId, true);
+        ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        ajax.send();
+    });
+}
+
 // This assumes that access token is valid.
 function GetFileList(onsuccess, onerror)
 {

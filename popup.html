@@ -3,6 +3,7 @@
         <script src="js/jquery.slim.min.js"></script>
         <script src="js/common.js"></script>
         <script src="js/popup.js"></script>
+        <link rel="stylesheet" type="text/css" href="popup.css"></link>
     </head>
     <body>
         <div id="needsAuth">
@@ -11,20 +12,24 @@
         </div>
         <div id="needsUserName">
             <div>Each device needs a unique name. The following device names are already taken:</div>
-            <div id="deviceList"></div>
+            <div class="deviceList"></div>
             <input id="username" type="text">
             <input id="sendUser" type="button" value="Save device name">
             <div id="changeDeviceNameStatus"></div>
         </div>
         <div id="readyToSend">
-            Device '<span id="deviceName"></span>' is ready to send.
-            <div id="readyDeviceList"></div>
-        </div>
-        <div id="testing">
-            <input id="save" type="button" value="Save" class="btn"></button>
-            <div id="saveResult"></div>
-            <input id="load" type="button" value="Load" class="btn"></button>
-            <div id="loadResult"></div>
+            <div class="readyHeader">
+                <input id="readyToggle" type="button" value="Settings">
+            </div>
+            <div id="readyIdle">
+                Device '<span id="deviceName"></span>' is ready to send.
+                <div class="deviceList"></div>
+            </div>
+            <div id="readySettings">
+                <p>Here you may delete devices and clear this device's name.</p>
+                <div class="resetDevice">Reset this device name: <input id="reset" value="Reset" type="button"></div>
+                <div id="deleteDevice"></div>
+            </div>
         </div>
     </body>
 </html>
