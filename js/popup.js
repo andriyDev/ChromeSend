@@ -27,7 +27,7 @@ function authorize(interactive)
                         populateDeviceLists();
                         if(deviceNames.indexOf(name) == -1)
                         {
-                            EditFileOnDrive(name, "", "text/plain", true).then(function(){
+                            CreateFileOnDrive(name, "", "text/plain", true).then(function(){
                                 $('#deviceName').append(name);
                                 $('#readyToSend').show();
                                 updateContextMenus();
@@ -81,7 +81,7 @@ function completeName()
         if(deviceNames.indexOf(name) == -1)
         {
             setStoredDeviceName(name).then(function(){
-                EditFileOnDrive(name, "", 'text/plain', true).then(function(){
+                CreateFileOnDrive(name, "", 'text/plain', true).then(function(){
                     $('#needsUserName').hide();
                     $('#deviceName').append(name);
                     $('#readyToSend').show();

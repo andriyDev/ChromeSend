@@ -43,7 +43,7 @@ function ensureValidDeviceName()
 
                 if(deviceNames.indexOf(name) == -1)
                 {
-                    EditFileOnDrive(name, "", "text/plain", true).then(function(file){
+                    CreateFileOnDrive(name, "", "text/plain", true).then(function(file){
                         thisDeviceName = name;
                         deviceNames.push(elem.title);
                         devices.push({name: elem.title, id: elem.id});
@@ -67,9 +67,9 @@ function ensureValidDeviceName()
                     deviceNames.push(elem.name);
                 });
                 thisDeviceName = undefined;
-                reject(Error(err));
+                reject(err);
             }, function(errInner){
-                reject(Error(errInner));
+                reject(errInner);
             });
         });
     });
@@ -141,16 +141,19 @@ function createDeviceList()
 function sendTabToAllDevices(info, tab)
 {
     devices.forEach(function(elem){
-        GetFileData(elem.id).then(function(data){
-            data += "\n" + tab.url;
-            EditFileOnDrive(elem.id, data, 'text/plain', false, true).then(function(){
-                
+        if(elem.name != thisDeviceName)
+        {
+            GetFileData(elem.id).then(function(data){
+                data += "\n" + tab.url;
+                UpdateFileOnDrive(elem.id, data, 'text/plain').then(function(){
+                    
+                }, function(err){
+                    console.error(err);
+                });
             }, function(err){
                 console.error(err);
             });
-        }, function(err){
-            console.error(err);
-        });
+        }
     });
 }
 
@@ -158,10 +161,10 @@ function sendTabToDevice(info, tab)
 {
     GetFileData(info.menuItemId).then(function(data){
         data += "\n" + tab.url;
-        EditFileOnDrive(info.menuItemId, data, "text/plain", false, true).then(function(){
+        UpdateFileOnDrive(info.menuItemId, data, "text/plain").then(function(){
         
         }, function(err){
-            console.error(err);
+            console.error(JSON.stringify(err.message));
         });
     }, function(err){
         console.error(err);

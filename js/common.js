@@ -5,7 +5,7 @@ function getStoredDeviceName()
         chrome.storage.local.get("deviceName", function(name){
             if(chrome.runtime.lasterror)
             {
-                reject(Error(chrome.runtime.lastError));
+                reject(chrome.runtime.lastError);
             }
             else
             {
@@ -28,7 +28,7 @@ function setStoredDeviceName(name)
         chrome.storage.local.set({deviceName: name}, function(){
             if(chrome.runtime.lasterror)
             {
-                reject(Error(chrome.runtime.lasterror));
+                reject(chrome.runtime.lasterror);
             }
             else
             {
@@ -44,7 +44,7 @@ function clearStoredDeviceName()
         chrome.storage.local.remove("deviceName", function(){
             if(chrome.runtime.lasterror)
             {
-                reject(Error(chrome.runtime.lasterror));
+                reject(chrome.runtime.lasterror);
             }
             else
             {
@@ -71,7 +71,7 @@ function updateDeviceList()
 }
 
 // This assumes that access token is valid.
-function EditFileOnDrive(filename, fileData, mimetype, createfile, useID)
+function CreateFileOnDrive(filename, fileData, mimetype)
 {
     return new Promise(function(resolve, reject){
         var ajax = new XMLHttpRequest();
@@ -83,7 +83,7 @@ function EditFileOnDrive(filename, fileData, mimetype, createfile, useID)
                 }
                 else
                 {
-                    reject(Error({status: this.status, response: this.responseText}));
+                    reject(Error(JSON.stringify({status: this.status, response: this.responseText})));
                 }
             }
         };
@@ -91,17 +91,42 @@ function EditFileOnDrive(filename, fileData, mimetype, createfile, useID)
         var uploadBody = "";
         uploadBody += "--UploadBoundary\n";
         uploadBody += "Content-type: application/json; charset=UTF-8\n\n";
-        uploadBody += JSON.stringify(useID ? {id: filename, parents: ['appDataFolder']} : {name: filename, parents: ['appDataFolder']});
+        uploadBody += JSON.stringify({name: filename, parents: ['appDataFolder']});
         uploadBody += "\n--UploadBoundary\n";
         uploadBody += "Content-Type: " + mimetype + "\n\n";
         uploadBody += fileData;
         uploadBody += "\n--UploadBoundary--";
 
-        ajax.open(createfile ? "POST" : "PUT",
+        ajax.open("POST",
             "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", true);
         ajax.setRequestHeader('Content-Type', 'multipart/related; boundary=UploadBoundary');
         ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
         ajax.send(uploadBody);
+    });
+}
+
+function UpdateFileOnDrive(fileId, data, mimeType)
+{
+    return new Promise(function(resolve, reject){
+        var ajax = new XMLHttpRequest();
+        ajax.onreadystatechange = function() {
+            if(this.readyState == 4){
+                if(this.status == 200)
+                {
+                    resolve(JSON.parse(this.responseText));
+                }
+                else
+                {
+                    reject(Error(JSON.stringify({status: this.status, response: this.responseText})));
+                }
+            }
+        };
+
+        ajax.open("PUT",
+            "https://www.googleapis.com/upload/drive/v2/files/" + fileId + "?uploadType=media", true);
+        ajax.setRequestHeader('Content-Type', mimeType);
+        ajax.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        ajax.send(data);
     });
 }
 
@@ -118,7 +143,7 @@ function GetFileList(onsuccess, onerror)
                 }
                 else
                 {
-                    reject(Error({status: this.status, response: this.responseText}));
+                    reject(Error(JSON.stringify({status: this.status, response: this.responseText})));
                 }
             }
         };
@@ -142,7 +167,7 @@ function GetFileData(fileId)
                 }
                 else
                 {
-                    reject(Error({status: this.status, response: this.responseText}));
+                    reject(Error(JSON.stringify({status: this.status, response: this.responseText})));
                 }
             }
         };
