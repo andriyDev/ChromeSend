@@ -96,7 +96,8 @@ function createDeviceList()
         chrome.contextMenus.create({
             title: "Send tab to device",
             contexts: ["page"],
-            id: "deviceList"
+            id: "deviceList",
+            onclick: updateDevices
         });
 
         if(devices.length <= 1)
@@ -133,6 +134,13 @@ function createDeviceList()
             });
         }
     });
+}
+
+function updateDevices()
+{
+    thisDeviceName = undefined;
+
+    tryGetDeviceName();
 }
 
 function sendTabToAllDevices(info, tab)
