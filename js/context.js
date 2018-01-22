@@ -102,18 +102,6 @@ function createDeviceList()
             id: "deviceList"
         });
 
-        devices.forEach(function(elem){
-            if(elem.name != thisDeviceName)
-            {
-                chrome.contextMenus.create({
-                    title: elem.name,
-                    contexts: ["page"],
-                    id: elem.id,
-                    parentId: "deviceList"
-                });
-            }
-        });
-
         if(devices.length <= 1)
         {
             chrome.contextMenus.create({
@@ -124,14 +112,60 @@ function createDeviceList()
                 id: "noDevices"
             });
         }
+        else
+        {
+            chrome.contextMenus.create({
+                title: "Send to all other devices",
+                parentId: "deviceList",
+                contexts: ["page"],
+                id: "allDevices",
+                onclick: sendTabToAllDevices
+            });
+
+            devices.forEach(function(elem){
+                if(elem.name != thisDeviceName)
+                {
+                    chrome.contextMenus.create({
+                        title: elem.name,
+                        contexts: ["page"],
+                        id: elem.id,
+                        parentId: "deviceList",
+                        onclick: sendTabToDevice
+                    });
+                }
+            });
+        }
+    });
+}
+
+function sendTabToAllDevices(info, tab)
+{
+    devices.forEach(function(elem){
+        GetFileData(elem.id).then(function(data){
+            data += "\n" + tab.url;
+            EditFileOnDrive(elem.id, data, 'text/plain', false, true).then(function(){
+                
+            }, function(err){
+                console.error(err);
+            });
+        }, function(err){
+            console.error(err);
+        });
     });
 }
 
 function sendTabToDevice(info, tab)
 {
-    console.log(info);
-    console.log(tab);
-    tab.url;
+    GetFileData(info.menuItemId).then(function(data){
+        data += "\n" + tab.url;
+        EditFileOnDrive(info.menuItemId, data, "text/plain", false, true).then(function(){
+        
+        }, function(err){
+            console.error(err);
+        });
+    }, function(err){
+        console.error(err);
+    });
 }
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){

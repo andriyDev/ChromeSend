@@ -71,7 +71,7 @@ function updateDeviceList()
 }
 
 // This assumes that access token is valid.
-function EditFileOnDrive(filename, fileData, mimetype, createfile)
+function EditFileOnDrive(filename, fileData, mimetype, createfile, useID)
 {
     return new Promise(function(resolve, reject){
         var ajax = new XMLHttpRequest();
@@ -91,7 +91,7 @@ function EditFileOnDrive(filename, fileData, mimetype, createfile)
         var uploadBody = "";
         uploadBody += "--UploadBoundary\n";
         uploadBody += "Content-type: application/json; charset=UTF-8\n\n";
-        uploadBody += JSON.stringify({name: filename, parents: ['appDataFolder']});
+        uploadBody += JSON.stringify(useID ? {id: filename, parents: ['appDataFolder']} : {name: filename, parents: ['appDataFolder']});
         uploadBody += "\n--UploadBoundary\n";
         uploadBody += "Content-Type: " + mimetype + "\n\n";
         uploadBody += fileData;
