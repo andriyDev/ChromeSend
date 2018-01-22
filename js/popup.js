@@ -85,6 +85,7 @@ function completeName()
                     $('#needsUserName').hide();
                     $('#deviceName').append(name);
                     $('#readyToSend').show();
+                    updateContextMenus();
                 }, function (err){
                     $('changeDeviceNameStatus').append("<span style='color:red'>Failed to update device name!</span>");
                 });
@@ -100,42 +101,6 @@ function completeName()
     else
     {
         $('changeDeviceNameStatus').append("<span style='color:red'>No authorization!</span>");
-    }
-}
-
-function save()
-{
-    if(accessToken)
-    {
-        document.getElementById("saveResult").innerHTML = "Uploading...";
-        EditFileOnDrive("ChromeSend.db", "Hey demons it's ya boi Andriy", "text/plain", true).then(
-            function(){
-                document.getElementById("saveResult").innerHTML = "Success!";
-            }, function(status, response){
-                document.getElementById("saveResult").innerHTML = "Failed!";
-            }
-        );
-    }
-}
-
-function load()
-{
-    if(accessToken)
-    {
-        GetFileList().then(function(resp){
-            if(resp.items.length == 0)
-            {
-                console.log("No Items!");
-                return;
-            }
-            GetFileData(resp.items[0].id).then(function(data){
-                console.log(data);
-            }, function(status, response){
-                console.error("Failed!");
-            });
-        }, function(status, response){
-            console.error("Failed!");
-        });
     }
 }
 
