@@ -58,11 +58,11 @@ function updateDeviceList()
 {
     return new Promise(function(resolve, reject){
         GetFileList().then(function(items){
-            var devices = new Array();
+            var dev = new Array();
             items.forEach(function(elem){
-                devices.push({name: elem.title, id: elem.id});
+                dev.push({name: elem.title, id: elem.id});
             });
-            resolve(devices);
+            resolve(dev);
         }, function(err){
             $('#deviceList').append("<span style='color: red'>Failed to update the device list.</span>");
             reject(err);

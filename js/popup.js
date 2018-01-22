@@ -1,6 +1,7 @@
 
 var accessToken;
 var thisDeviceId;
+var thisDeviceName;
 var devices;
 var deviceNames;
 
@@ -39,21 +40,14 @@ function authorize(interactive)
                 $('#needsAuth').hide();
                 getStoredDeviceName().then(function(name){
                     updateDeviceList().then(function(newDevices){
-                        devices = newDevices;
-                        deviceNames = new Array();
-                        devices.forEach(function(elem){
-                            if(elem.name == name)
-                            {
-                                thisDeviceId = elem.id;
-                            }
-                            deviceNames.push(elem.name);
-                        });
-                        populateDeviceLists();
+                        thisDeviceName = name;
+                        applyDeviceList(newDevices);
                         if(deviceNames.indexOf(name) == -1)
                         {
                             $('#needsUserName').show();
                             clearStoredDeviceName().then(function(){
                                 thisDeviceName = undefined;
+                                thisDeviceId = undefined;
                                 reject(Error("Invalid device name."));
                             }, function(err){
                                 reject(Error("Invalid device name."));
@@ -68,17 +62,10 @@ function authorize(interactive)
                         }
                     });
                 }, function(){
+                    thisDeviceId = undefined;
+                    thisDeviceName = undefined;
                     updateDeviceList().then(function(newDevices){
-                        devices = newDevices;
-                        deviceNames = new Array();
-                        devices.forEach(function(elem){
-                            if(elem.name == name)
-                            {
-                                thisDeviceId = elem.id;
-                            }
-                            deviceNames.push(elem.name);
-                        });
-                        populateDeviceLists();
+                        applyDeviceList(newDevices);
                         $('#needsUserName').show();
                     });
                 });
@@ -86,6 +73,20 @@ function authorize(interactive)
         }
         );
     }
+}
+
+function applyDeviceList(newDevices)
+{
+    devices = newDevices;
+    deviceNames = new Array();
+    devices.forEach(function(elem){
+        if(elem.name == thisDeviceName)
+        {
+            thisDeviceId = elem.id;
+        }
+        deviceNames.push(elem.name);
+    });
+    populateDeviceLists();
 }
 
 function populateDeviceLists()
@@ -118,12 +119,34 @@ function deleteSelf()
     {
         deleteDevice(thisDeviceId);
         thisDeviceId = undefined;
+        thisDeviceName = undefined;
+        clearStoredDeviceName().then(function(){
+            $('#needsAuth').show();
+            $('#needsUserName').hide();
+            $('#readyToSend').hide();
+
+            $('#readyIdle').show();
+            $('#readySettings').hide();
+
+            accessToken = undefined;
+
+            authorize(false);
+        }, function(err){
+            console.error(err);
+        });
     }
 }
 
 function deleteDevice(id)
 {
-    DeleteFileOnDrive(id).then(function(){}, function(err){
+    DeleteFileOnDrive(id).then(function(){
+        updateDeviceList().then(function(newDevices){
+            applyDeviceList(newDevices);
+            populateDeviceLists();
+        }, function(err){
+            console.error(err);
+        });
+    }, function(err){
         console.error(err);
     });
 }
@@ -144,13 +167,16 @@ function completeName()
             setStoredDeviceName(name).then(function(){
                 CreateFileOnDrive(name, "", 'text/plain', true).then(function(file){
                     $('#needsUserName').hide();
-                    $('#deviceName').append(name);
+                    $('#deviceName').empty().append(name);
                     $('#readyToSend').show();
 
                     devices.push({name: name, id: file.id});
                     deviceNames.push(name);
 
                     thisDeviceId = file.id;
+                    thisDeviceName = name;
+
+                    populateDeviceLists();
                     
                     updateContextMenus();
                     openTabs();
