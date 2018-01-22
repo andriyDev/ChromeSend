@@ -13,7 +13,10 @@ function openTabs()
 {
     GetFileData(thisDeviceId).then(function(data){
         data.split('\n').forEach(function(elem){
-            chrome.tabs.create({url: elem, active: false})
+            if(elem != "")
+            {
+                chrome.tabs.create({url: elem, active: false})
+            }
         });
         UpdateFileOnDrive(thisDeviceId, "", "text/plain").then(function(){
             
