@@ -175,7 +175,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
         {
             tryAuth();
         }
-        else if(!hasDeviceName)
+        else if(!thisDeviceName)
         {
             tryGetDeviceName();
         }
