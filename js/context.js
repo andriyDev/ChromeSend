@@ -144,7 +144,14 @@ function sendTabToAllDevices(info, tab)
         if(elem.name != thisDeviceName)
         {
             GetFileData(elem.id).then(function(data){
-                data += "\n" + tab.url;
+                if(data == "")
+                {
+                    data += tab.url;
+                }
+                else
+                {
+                    data += "\n" + tab.url;
+                }
                 UpdateFileOnDrive(elem.id, data, 'text/plain').then(function(){
                     
                 }, function(err){
@@ -160,11 +167,18 @@ function sendTabToAllDevices(info, tab)
 function sendTabToDevice(info, tab)
 {
     GetFileData(info.menuItemId).then(function(data){
-        data += "\n" + tab.url;
+        if(data == "")
+        {
+            data += tab.url;
+        }
+        else
+        {
+            data += "\n" + tab.url;
+        }
         UpdateFileOnDrive(info.menuItemId, data, "text/plain").then(function(){
         
         }, function(err){
-            console.error(JSON.stringify(err.message));
+            console.error(err);
         });
     }, function(err){
         console.error(err);
