@@ -1,9 +1,9 @@
 
-var accessToken;
-var thisDeviceId;
-var thisDeviceName;
-var devices;
-var deviceNames;
+let accessToken;
+let thisDeviceId;
+let thisDeviceName;
+let devices;
+let deviceNames;
 
 function updateContextMenus()
 {
@@ -19,12 +19,8 @@ function openTabs()
                 chrome.tabs.create({url: elem, active: false})
             }
         });
-        UpdateFileOnDrive(thisDeviceId, "", "text/plain").then(function(){
-            
-        }, function(err){
-            console.error(err);
-        });
-    }, function(err){
+        return UpdateFileOnDrive(thisDeviceId, "", "text/plain");
+    }).catch(err => {
         console.error(err);
     });
 }
@@ -67,7 +63,7 @@ function authorize(interactive)
         }
         else
         {
-            $('#deviceName').append(thisDeviceName);
+            $('#deviceName').text(thisDeviceName);
             $('#readyToSend').show();
             $('#settingsLink').show();
             updateContextMenus();
@@ -104,54 +100,54 @@ function populateDeviceLists()
     list = $('#deleteDevice');
     list.empty();
     devices.forEach(function(elem){
-        if(elem.id != thisDeviceId)
+        if(elem.id == thisDeviceId)
         {
-            const devName = $("<h5></h5>").text(elem.name);
-            const delBtn = $("<button></button>").data("deldev", elem.id).addClass("btn btn-danger btn-sm").text("Delete");
-            const container = $('<div></div>').addClass("deleteElem").append(devName).append(delBtn);
-            const newElem = $('<li class="list-group-item"></li>').append(container);
-            list.append(newElem);
-            delBtn.click(() => {
-                deleteDevice(elem.id);
-            });
+            return;
         }
+        const devName = $("<h5></h5>").text(elem.name);
+        const delBtn = $("<button></button>").data("deldev", elem.id).addClass("btn btn-danger btn-sm").text("Delete");
+        const container = $('<div></div>').addClass("deleteElem").append(devName).append(delBtn);
+        const newElem = $('<li class="list-group-item"></li>').append(container);
+        list.append(newElem);
+        delBtn.click(() => {
+            deleteDevice(elem.id);
+        });
     });
 }
 
 function deleteSelf()
 {
-    if(thisDeviceId)
+    if(!thisDeviceId)
     {
-        deleteDevice(thisDeviceId);
-        thisDeviceId = undefined;
-        thisDeviceName = undefined;
-        clearStoredDeviceName().then(function(){
-            $('#needsAuth').show();
-            $('#needsUserName').hide();
-            $('#readyToSend').hide();
-
-            $('#readyIdle').show();
-            $('#readySettings').hide();
-
-            accessToken = undefined;
-
-            authorize(false);
-        }, function(err){
-            console.error(err);
-        });
+        return;
     }
+    deleteDevice(thisDeviceId);
+    thisDeviceId = undefined;
+    thisDeviceName = undefined;
+    clearStoredDeviceName().then(function(){
+        $('#needsAuth').show();
+        $('#needsUserName').hide();
+        $('#readyToSend').hide();
+
+        $('#readyIdle').show();
+        $('#readySettings').hide();
+
+        accessToken = undefined;
+
+        return authorize(false);
+    }, function(err){
+        console.error(err);
+    });
 }
 
 function deleteDevice(id)
 {
     DeleteFileOnDrive(id).then(function(){
-        updateDeviceList().then(function(newDevices){
-            applyDeviceList(newDevices);
-            populateDeviceLists();
-        }, function(err){
-            console.error(err);
-        });
-    }, function(err){
+        return updateDeviceList();
+    }).then(function(newDevices){
+        applyDeviceList(newDevices);
+        populateDeviceLists();
+    }).catch(err => {
         console.error(err);
     });
 }
@@ -164,43 +160,37 @@ function editingName()
 function completeName()
 {
     $('#changeDeviceNameStatus').empty();
-    if(accessToken)
+    if(!accessToken)
     {
-        var name = $('#username').val();
-        if(deviceNames.indexOf(name) == -1)
-        {
-            setStoredDeviceName(name).then(function(){
-                CreateFileOnDrive(name, "", 'text/plain', true).then(function(file){
-                    $('#needsUserName').hide();
-                    $('#deviceName').empty().append(name);
-                    $('#readyToSend').show();
-
-                    devices.push({name: name, id: file.id});
-                    deviceNames.push(name);
-
-                    thisDeviceId = file.id;
-                    thisDeviceName = name;
-
-                    populateDeviceLists();
-                    
-                    updateContextMenus();
-                    openTabs();
-                }, function (err){
-                    $('changeDeviceNameStatus').append("<span style='color:red'>Failed to update device name!</span>");
-                });
-            }, function(err) {
-                $('changeDeviceNameStatus').append("<span style='color:red'>Failed to update device name!</span>");
-            });
-        }
-        else
-        {
-            $('changeDeviceNameStatus').append("<span style='color:red'>Device name is not unique!</span>");
-        }
+        $('changeDeviceNameStatus').text("No authorization!");
+        return;
     }
-    else
+    const name = $('#username').val();
+    if(deviceNames.indexOf(name) != -1)
     {
-        $('changeDeviceNameStatus').append("<span style='color:red'>No authorization!</span>");
+        $('changeDeviceNameStatus').text("Device name is not unique!");
+        return;
     }
+    setStoredDeviceName(name).then(function(){
+        return CreateFileOnDrive(name, "", 'text/plain', true);
+    }).then(file => {
+        $('#needsUserName').hide();
+        $('#deviceName').text(name);
+        $('#readyToSend').show();
+
+        devices.push({name: name, id: file.id});
+        deviceNames.push(name);
+
+        thisDeviceId = file.id;
+        thisDeviceName = name;
+
+        populateDeviceLists();
+        
+        updateContextMenus();
+        openTabs();
+    }).catch(err => {
+        $('changeDeviceNameStatus').text("Failed to update device name!");
+    });
 }
 
 document.addEventListener("DOMContentLoaded", function(e){
