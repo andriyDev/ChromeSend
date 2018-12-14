@@ -69,6 +69,7 @@ function authorize(interactive)
         {
             $('#deviceName').append(name);
             $('#readyToSend').show();
+            $('#settingsLink').show();
             updateContextMenus();
             openTabs();
         }
@@ -217,6 +218,6 @@ document.addEventListener("DOMContentLoaded", function(e){
     $('#authorize-button').click(function(e){ authorize(true); });
     $('#username').keypress(function(e){ editingName(); });
     $('#assignUserName').submit(function(e){ completeName(); return false; });
-    $('#readyToggle').click(function(e){ $('#readyIdle').toggle(); $('#readySettings').toggle(); });
     $('#reset').click(function(e){ deleteSelf(); });
+    $('#settingsLink').click(e => { $('#readyIdle').toggle(); $('#readySettings').toggle(); });
 });
