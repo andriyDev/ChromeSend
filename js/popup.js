@@ -212,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function(e){
 
     $('#authorize-button').click(function(e){ authorize(true); });
     $('#username').keypress(function(e){ editingName(); });
-    $('#sendUser').click(function(e){ completeName(); });
+    $('#assignUserName').submit(function(e){ completeName(); return false; });
     $('#readyToggle').click(function(e){ $('#readyIdle').toggle(); $('#readySettings').toggle(); });
     $('#reset').click(function(e){ deleteSelf(); });
 });
