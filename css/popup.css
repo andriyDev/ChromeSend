@@ -19,19 +19,6 @@ html, body
     padding-right: 30px;
 }
 
-.readyHeader
-{
-    width: 100%;
-    display: flex;
-    flex-direction: row-reverse;
-    background-color: #EEEEEE;
-}
-
-.resetDevice
-{
-    display:flex;
-}
-
 .deleteElem {
     display: flex;
     justify-content: space-between;
