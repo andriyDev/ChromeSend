@@ -13,6 +13,12 @@ html, body
     padding-top: 0;
 }
 
+.expand-right {
+    flex: 1 1 auto;
+    text-align: right;
+    padding-right: 30px;
+}
+
 .readyHeader
 {
     width: 100%;

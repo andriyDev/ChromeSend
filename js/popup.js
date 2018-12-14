@@ -206,7 +206,9 @@ document.addEventListener("DOMContentLoaded", function(e){
 
     $('#readyIdle').show();
     $('#readySettings').hide();
+    
     $('#changeDeviceNameStatus').hide();
+    $('#settingsLink').hide();
 
     authorize(false);
 
