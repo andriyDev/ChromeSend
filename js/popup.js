@@ -106,9 +106,10 @@ function populateDeviceLists()
     devices.forEach(function(elem){
         if(elem.id != thisDeviceId)
         {
-            const devName = $("<span></span>").text(elem.name);
-            const delBtn = $("<button></button>").data("deldev", elem.id).addClass("btn btn-danger").text("Delete");
-            const newElem = $('<li class="list-group-item deleteElem"></li>').append(devName).append(delBtn);
+            const devName = $("<h5></h5>").text(elem.name);
+            const delBtn = $("<button></button>").data("deldev", elem.id).addClass("btn btn-danger btn-sm").text("Delete");
+            const container = $('<div></div>').addClass("deleteElem").append(devName).append(delBtn);
+            const newElem = $('<li class="list-group-item"></li>').append(container);
             list.append(newElem);
             delBtn.click(() => {
                 deleteDevice(elem.id);
