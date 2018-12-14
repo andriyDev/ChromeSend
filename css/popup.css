@@ -32,8 +32,7 @@ html, body
     display:flex;
 }
 
-#deleteDevice
-{
-    width: 100%;
-    flex-direction: column;
+.deleteElem {
+    display: flex;
+    justify-content: space-between;
 }
