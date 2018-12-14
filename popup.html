@@ -1,4 +1,4 @@
-<html style="width: 300px; height: 200px">
+<html>
     <head>
         <script src="js/common.js"></script>
         <script src="js/popup.js"></script>
@@ -8,29 +8,41 @@
         <script src="js/bootstrap.min.js"></script>
     </head>
     <body>
-        <div id="needsAuth">
-            <div>ChromeSend needs access to Google Drive's Application Data. By authorizing ChromeSend, you can transfer tabs among any connected devices.</div>
-            <input id="authorize-button" type="button" value="Authorize" class="btn">
-        </div>
-        <div id="needsUserName">
-            <div>Each device needs a unique name. The following device names are already taken:</div>
-            <div class="deviceList"></div>
-            <input id="username" type="text">
-            <input id="sendUser" type="button" value="Save device name">
-            <div id="changeDeviceNameStatus"></div>
-        </div>
-        <div id="readyToSend">
-            <div class="readyHeader">
-                <input id="readyToggle" type="button" value="Settings">
+        <nav id="header" class="navbar navbar-dark bg-primary">
+            <span class="navbar-brand">ChromeSend</span>
+        </nav>
+        <div class="content">
+            <div id="needsAuth">
+                <h4>Setup</h4>
+                <p>ChromeSend needs access to Google Drive's Application Data. By authorizing ChromeSend, you can transfer tabs among any connected devices.</p>
+                <button id="authorize-button" class="btn btn-primary">Authorize</button>
             </div>
-            <div id="readyIdle">
-                Device '<span id="deviceName"></span>' is ready to send.
-                <div class="deviceList"></div>
+            <div id="needsUserName">
+                <h4>Setup</h4>
+                <p>Each device needs a unique name. The following device names are already taken:</p>
+                <ul class="deviceList list-group"></ul>
+                <form id="assignUserName" class="form-inline">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="username" placeholder="Device Name">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Assign Name</button>
+                </form>
+                <div id="changeDeviceNameStatus" class="alert alert-danger">
+                </div>
             </div>
-            <div id="readySettings">
-                <p>Here you may delete devices and clear this device's name.</p>
-                <div class="resetDevice">Reset this device name: <input id="reset" value="Reset" type="button"></div>
-                <div id="deleteDevice"></div>
+            <div id="readyToSend">
+                <div class="readyHeader">
+                    <input id="readyToggle" type="button" value="Settings">
+                </div>
+                <div id="readyIdle">
+                    Device '<span id="deviceName"></span>' is ready to send.
+                    <div class="deviceList"></div>
+                </div>
+                <div id="readySettings">
+                    <p>Here you may delete devices and clear this device's name.</p>
+                    <div class="resetDevice">Reset this device name: <input id="reset" value="Reset" type="button"></div>
+                    <div id="deleteDevice"></div>
+                </div>
             </div>
         </div>
     </body>

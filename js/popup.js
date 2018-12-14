@@ -96,7 +96,7 @@ function populateDeviceLists()
     devices.forEach(function(elem){
         if(elem.id != thisDeviceId)
         {
-            list.append("<div>" + elem.name + "</div>");
+            list.append("<li class='list-group-item'>" + elem.name + "</li>");
         }
     });
 
@@ -206,6 +206,7 @@ document.addEventListener("DOMContentLoaded", function(e){
 
     $('#readyIdle').show();
     $('#readySettings').hide();
+    $('#changeDeviceNameStatus').hide();
 
     authorize(false);
 
