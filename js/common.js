@@ -146,7 +146,7 @@ function DeleteFileOnDrive(fileId)
 function GetFileList(onsuccess, onerror)
 {
     let status;
-    return fetch("https://www.googleapis.com/drive/v2/files" + fileId, {
+    return fetch("https://www.googleapis.com/drive/v2/files", {
         method: "GET",
         headers: {
             'spaces': 'appDataFolder',
