@@ -64,7 +64,7 @@ function updateDeviceList()
             });
             resolve(dev);
         }, function(err){
-            $('#deviceList').append("<span style='color: red'>Failed to update the device list.</span>");
+            $('#deviceList').text("<span style='color: red'>Failed to update the device list.</span>");
             reject(err);
         });
     });

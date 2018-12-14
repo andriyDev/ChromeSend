@@ -31,55 +31,55 @@ function openTabs()
 
 function authorize(interactive)
 {
-    if(!accessToken)
+    if(accessToken)
     {
-        chrome.identity.getAuthToken({interactive: interactive}, function(token) {
-            if (token) {
-                accessToken = token;
-            
-                $('#needsAuth').hide();
-                getStoredDeviceName().then(function(name){
-                    updateDeviceList().then(function(newDevices){
-                        thisDeviceName = name;
-                        applyDeviceList(newDevices);
-                        if(deviceNames.indexOf(name) == -1)
-                        {
-                            $('#needsUserName').show();
-                            clearStoredDeviceName().then(function(){
-                                thisDeviceName = undefined;
-                                thisDeviceId = undefined;
-                                reject(Error("Invalid device name."));
-                            }, function(err){
-                                reject(Error("Invalid device name."));
-                            });
-                        }
-                        else
-                        {
-                            $('#deviceName').append(name);
-                            $('#readyToSend').show();
-                            updateContextMenus();
-                            openTabs();
-                        }
-                    });
-                }, function(){
-                    thisDeviceId = undefined;
-                    thisDeviceName = undefined;
-                    updateDeviceList().then(function(newDevices){
-                        applyDeviceList(newDevices);
-                        $('#needsUserName').show();
-                    });
-                });
-            }
-        }
-        );
+        return Promise.resolve(accessToken);
     }
+    return new Promise((resolve, reject) => {
+        chrome.identity.getAuthToken({interactive: interactive}, token => {
+            if (!token) {
+                reject("Failed to acquire token!");
+            }
+            resolve(token);
+        });
+    }).then(token => {
+        accessToken = token;
+    
+        $('#needsAuth').hide();
+        return getStoredDeviceName();
+    }).then(name => {
+        thisDeviceName = name;
+        return updateDeviceList();
+    }, error => {
+        // Failed to get stored device name.
+        thisDeviceId = undefined;
+        thisDeviceName = undefined;
+        return updateDeviceList();
+    }).then(newDevices => {
+        applyDeviceList(newDevices);
+        if(deviceNames.indexOf(thisDeviceName) == -1)
+        {
+            clearStoredDeviceName().finally(() => {
+                thisDeviceName = undefined;
+                thisDeviceId = undefined;
+                $('#needsUserName').show();
+            });
+        }
+        else
+        {
+            $('#deviceName').append(name);
+            $('#readyToSend').show();
+            updateContextMenus();
+            openTabs();
+        }
+    });
 }
 
 function applyDeviceList(newDevices)
 {
     devices = newDevices;
     deviceNames = new Array();
-    devices.forEach(function(elem){
+    devices.map(elem => {
         if(elem.name == thisDeviceName)
         {
             thisDeviceId = elem.id;
@@ -206,11 +206,13 @@ document.addEventListener("DOMContentLoaded", function(e){
 
     $('#readyIdle').show();
     $('#readySettings').hide();
-    
+
     $('#changeDeviceNameStatus').hide();
     $('#settingsLink').hide();
 
-    authorize(false);
+    authorize(false).catch(error => {
+        console.error(error);
+    });
 
     $('#authorize-button').click(function(e){ authorize(true); });
     $('#username').keypress(function(e){ editingName(); });
