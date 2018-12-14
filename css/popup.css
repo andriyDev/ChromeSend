@@ -34,5 +34,6 @@ html, body
 
 .deleteElem {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
 }
