@@ -67,7 +67,7 @@ function authorize(interactive)
         }
         else
         {
-            $('#deviceName').append(name);
+            $('#deviceName').append(thisDeviceName);
             $('#readyToSend').show();
             $('#settingsLink').show();
             updateContextMenus();
