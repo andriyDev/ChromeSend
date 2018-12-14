@@ -92,7 +92,7 @@ function CreateFileOnDrive(filename, fileData, mimetype)
         status = response.status;
         return response.json();
     }).then(json => {
-        if(status == 200) {
+        if(status >= 200 && status < 300) {
             return Promise.resolve(json);
         } else {
             return Promise.reject({status, response: json});
@@ -114,7 +114,7 @@ function UpdateFileOnDrive(fileId, data, mimeType)
         status = response.status;
         return response.json();
     }).then(json => {
-        if(status == 200) {
+        if(status >= 200 && status < 300) {
             return Promise.resolve(json);
         } else {
             return Promise.reject({status, response: json});
@@ -132,9 +132,9 @@ function DeleteFileOnDrive(fileId)
         }
     }).then(response => {
         status = response.status;
-        return response.json();
+        return response.text();
     }).then(json => {
-        if(status == 200) {
+        if(status >= 200 && status < 300) {
             return Promise.resolve(json);
         } else {
             return Promise.reject({status, response: json});
@@ -156,7 +156,7 @@ function GetFileList(onsuccess, onerror)
         status = response.status;
         return response.json();
     }).then(json => {
-        if(status == 200) {
+        if(status >= 200 && status < 300) {
             return Promise.resolve(json.items);
         } else {
             return Promise.reject({status, response: json});
@@ -176,7 +176,7 @@ function GetFileData(fileId)
         status = response.status;
         return response.text();
     }).then(text => {
-        if(status == 200) {
+        if(status >= 200 && status < 300) {
             return Promise.resolve(text);
         } else {
             return Promise.reject({status, response: text});
