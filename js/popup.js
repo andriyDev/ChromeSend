@@ -33,8 +33,9 @@ function authorize(interactive)
     }
     return new Promise((resolve, reject) => {
         chrome.identity.getAuthToken({interactive: interactive}, token => {
-            if (!token) {
+            if (token == undefined) {
                 reject("Failed to acquire token!");
+                return;
             }
             resolve(token);
         });
@@ -68,6 +69,23 @@ function authorize(interactive)
             $('#settingsLink').show();
             updateContextMenus();
             openTabs();
+        }
+    }).catch(err => {
+        // If the problem we had was that we do not have permission, that means our token was invalid.
+        if (accessToken && err && err.status && err.status == 401) {
+            // In that case, remove the cached token, and then try again to authorize.
+            return new Promise((resolve, reject) => {
+                chrome.identity.removeCachedAuthToken({'token': accessToken}, () => {
+                    accessToken = undefined;
+                    resolve();
+                });
+            }).then(() => {
+                $('#needsAuth').show();
+                return authorize(interactive);
+            });
+        } else {
+            throw err;
+            console.error(err);
         }
     });
 }
