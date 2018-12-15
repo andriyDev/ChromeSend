@@ -121,10 +121,11 @@ function deleteSelf()
     {
         return;
     }
-    deleteDevice(thisDeviceId);
-    thisDeviceId = undefined;
-    thisDeviceName = undefined;
-    clearStoredDeviceName().then(function(){
+    deleteDevice(thisDeviceId).then(() => {
+        thisDeviceId = undefined;
+        thisDeviceName = undefined;
+        return clearStoredDeviceName();
+    }).then(function(){
         $('#needsAuth').show();
         $('#needsUserName').hide();
         $('#readyToSend').hide();
@@ -135,14 +136,14 @@ function deleteSelf()
         accessToken = undefined;
 
         return authorize(false);
-    }, function(err){
+    }).catch(err => {
         console.error(err);
     });
 }
 
 function deleteDevice(id)
 {
-    DeleteFileOnDrive(id).then(function(){
+    return DeleteFileOnDrive(id).then(function(){
         return updateDeviceList();
     }).then(function(newDevices){
         applyDeviceList(newDevices);
@@ -159,16 +160,16 @@ function editingName()
 
 function completeName()
 {
-    $('#changeDeviceNameStatus').empty();
+    $('#changeDeviceNameStatus').hide();
     if(!accessToken)
     {
-        $('changeDeviceNameStatus').text("No authorization!");
+        $('#changeDeviceNameStatus').show().text("No authorization!");
         return;
     }
     const name = $('#username').val();
     if(deviceNames.indexOf(name) != -1)
     {
-        $('changeDeviceNameStatus').text("Device name is not unique!");
+        $('#changeDeviceNameStatus').show().text("Device name is not unique!");
         return;
     }
     setStoredDeviceName(name).then(function(){
@@ -177,6 +178,7 @@ function completeName()
         $('#needsUserName').hide();
         $('#deviceName').text(name);
         $('#readyToSend').show();
+        $('#settingsLink').show();
 
         devices.push({name: name, id: file.id});
         deviceNames.push(name);
@@ -189,7 +191,7 @@ function completeName()
         updateContextMenus();
         openTabs();
     }).catch(err => {
-        $('changeDeviceNameStatus').text("Failed to update device name!");
+        $('#changeDeviceNameStatus').show().text("Failed to update device name!");
     });
 }
 
