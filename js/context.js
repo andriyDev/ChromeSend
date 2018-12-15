@@ -8,85 +8,80 @@ var deviceNames;
 function authenticate(interactive)
 {
     return new Promise(function(resolve, reject){
-        if(!accessToken)
-        {
-            chrome.identity.getAuthToken({interactive: interactive}, function(token) {
-                if (token) {
-                    accessToken = token;
-                    thisDeviceName = undefined;
-
-                    resolve(accessToken);
-                }
-                else
-                {
-                    reject(Error("Failed to acquire authentication token."));
-                }
-            });
-        }
-        else
+        if(accessToken)
         {
             resolve(accessToken);
+            return;
         }
-    });
-}
+        chrome.identity.getAuthToken({interactive: interactive}, function(token) {
+            if (token == undefined) {
+                reject("Failed to acquire authentication token.");
+                return;
+            }
+            accessToken = token;
+            thisDeviceName = undefined;
 
-function ensureValidDeviceName()
-{
-    return new Promise(function(resolve, reject){
-        getStoredDeviceName().then(function(name){
-            updateDeviceList().then(function(newDevices){
-                devices = newDevices;
-                deviceNames = new Array();
-                devices.forEach(function(elem){
-                    deviceNames.push(elem.name);
-                });
-
-                if(deviceNames.indexOf(name) == -1)
-                {
-                    clearStoredDeviceName().then(function(){
-                        thisDeviceName = undefined;
-                        reject(Error("Invalid device name."));
-                    }, function(err){
-                        reject(Error("Invalid device name."));
-                    });
-                }
-                else
-                {
-                    thisDeviceName = name;
-                    resolve(name);
-                }
-            });
-        }, function(err){
-            updateDeviceList().then(function(newDevices){
-                devices = newDevices;
-                deviceNames = new Array();
-                devices.forEach(function(elem){
-                    deviceNames.push(elem.name);
-                });
-                thisDeviceName = undefined;
-                reject(err);
-            }, function(errInner){
-                reject(errInner);
-            });
+            resolve(accessToken);
         });
     });
 }
 
-function tryAuth()
+function onFailReauth(err) {
+    // If the problem we had was that we do not have permission, that means our token was invalid.
+    if (accessToken && err && err.status && err.status == 401) {
+        // In that case, remove the cached token, and then try again to authorize.
+        return new Promise(resolve => {
+            chrome.identity.removeCachedAuthToken({'token': accessToken}, () => {
+                accessToken = undefined;
+                resolve();
+            });
+        }).then(() => {
+            return authenticate(false);
+        });
+    } else {
+        throw err;
+    }
+}
+
+function ensureValidDeviceName()
 {
-    authenticate(false).then(function(){
-        tryGetDeviceName();
-    }, function(err){
-        console.error(err);
+    return getStoredDeviceName().then(function(name){
+        thisDeviceName = name;
+        return updateDeviceList();
+    }, err => {
+        thisDeviceName = undefined;
+        return updateDeviceList();
+    }).then(function(newDevices){
+        devices = newDevices;
+        deviceNames = new Array();
+        devices.forEach(function(elem){
+            deviceNames.push(elem.name);
+        });
+
+        if(thisDeviceName && deviceNames.indexOf(thisDeviceName) == -1)
+        {
+            return clearStoredDeviceName().then(function(){
+                thisDeviceName = undefined;
+                console.log("Invalid device name.");
+            }, function(err){
+                console.log("Invalid device name.");
+            });
+        }
+        else
+        {
+            return Promise.resolve(thisDeviceName);
+        }
+    }).catch(err => {
+        return onFailReauth(err).then(() => {
+            return ensureValidDeviceName();
+        });
     });
 }
 
-function tryGetDeviceName()
+function getDeviceName()
 {
-    ensureValidDeviceName().then(function(){
+    return ensureValidDeviceName().then(function(){
         createDeviceList();
-    }, function(err){
-        console.error(err);
     });
 }
 
@@ -140,32 +135,31 @@ function updateDevices()
 {
     thisDeviceName = undefined;
 
-    tryGetDeviceName();
+    getDeviceName().catch(err => {
+        console.error(err);
+    });
 }
 
 function sendTabToAllDevices(info, tab)
 {
     devices.forEach(function(elem){
-        if(elem.name != thisDeviceName)
+        if(elem.name == thisDeviceName)
         {
-            GetFileData(elem.id).then(function(data){
-                if(data == "")
-                {
-                    data += tab.url;
-                }
-                else
-                {
-                    data += "\n" + tab.url;
-                }
-                UpdateFileOnDrive(elem.id, data, 'text/plain').then(function(){
-                    
-                }, function(err){
-                    console.error(err);
-                });
-            }, function(err){
-                console.error(err);
-            });
+            return;
         }
+        GetFileData(elem.id).then(function(data){
+            if(data == "")
+            {
+                data += tab.url;
+            }
+            else
+            {
+                data += "\n" + tab.url;
+            }
+            return UpdateFileOnDrive(elem.id, data, 'text/plain');
+        }).catch(err => {
+            console.error(err);
+        });
     });
 }
 
@@ -180,12 +174,8 @@ function sendTabToDevice(info, tab)
         {
             data += "\n" + tab.url;
         }
-        UpdateFileOnDrive(info.menuItemId, data, "text/plain").then(function(){
-        
-        }, function(err){
-            console.error(err);
-        });
-    }, function(err){
+        return UpdateFileOnDrive(info.menuItemId, data, "text/plain");
+    }).catch(err => {
         console.error(err);
     });
 }
@@ -193,15 +183,16 @@ function sendTabToDevice(info, tab)
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
     if(request.greeting == "update")
     {
-        if(!accessToken)
-        {
-            tryAuth();
-        }
-        else if(!thisDeviceName)
-        {
-            tryGetDeviceName();
-        }
+        authenticate(false).then(() => {
+            return getDeviceName();
+        }).catch(err => {
+            console.error(err);
+        });
     }
 });
 
-tryAuth();
+authenticate(false).then(() => {
+    return getDeviceName();
+}).catch(err => {
+    console.error(err);
+});

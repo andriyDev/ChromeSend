@@ -85,7 +85,6 @@ function authorize(interactive)
             });
         } else {
             throw err;
-            console.error(err);
         }
     });
 }
