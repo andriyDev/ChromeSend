@@ -147,25 +147,17 @@ function sendTabToAllDevices(info, tab)
         {
             return;
         }
-        GetFileData(elem.id).then(function(data){
-            if(data == "")
-            {
-                data += tab.url;
-            }
-            else
-            {
-                data += "\n" + tab.url;
-            }
-            return UpdateFileOnDrive(elem.id, data, 'text/plain');
-        }).catch(err => {
-            console.error(err);
-        });
+        addTabToDevice(elem.id, tab);
     });
 }
 
 function sendTabToDevice(info, tab)
 {
-    GetFileData(info.menuItemId).then(function(data){
+    addTabToDevice(info.menuItemId)
+}
+
+function addTabToDevice(deviceId, tab) {
+    return GetFileData(deviceId).then(data => {
         if(data == "")
         {
             data += tab.url;
@@ -174,9 +166,11 @@ function sendTabToDevice(info, tab)
         {
             data += "\n" + tab.url;
         }
-        return UpdateFileOnDrive(info.menuItemId, data, "text/plain");
+        return UpdateFileOnDrive(deviceId, data, "text/plain");
     }).catch(err => {
-        console.error(err);
+        return authenticate(false).then(() => {
+            return addTabToDevice(deviceId, tab);
+        });
     });
 }
 
